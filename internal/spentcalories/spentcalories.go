@@ -28,8 +28,8 @@ func parseTraining(data string) (int, string, time.Duration, error) {
 	if err != nil {
 		return 0, "", 0, fmt.Errorf("ошибка преобразования количества шагов в int: %v", err)
 	}
-	if steps < 0 {
-		return 0, "", 0, fmt.Errorf("Количество шагов не может быть меньше 0")
+	if steps <= 0 {
+		return 0, "", 0, fmt.Errorf("Количество шагов не может быть меньше или равно 0")
 	}
 
 	activity := parts[1]
@@ -37,6 +37,9 @@ func parseTraining(data string) (int, string, time.Duration, error) {
 	duration, err := time.ParseDuration(parts[2])
 	if err != nil {
 		return 0, "", 0, fmt.Errorf("ошибка преобразования продолжительности прогулки в time.Duration: %v", err)
+	}
+	if duration.Minutes() <= 0 {
+		return 0, "", 0, fmt.Errorf("время активности не может быть меньше или равно 0")
 	}
 
 	return steps, activity, duration, nil
@@ -62,7 +65,7 @@ func TrainingInfo(data string, weight, height float64) (string, error) {
 	steps, activity, duration, err := parseTraining(data)
 	if err != nil {
 		log.Println(err)
-		return "", nil
+		return "", err
 	}
 
 	dist := distance(steps, height)
@@ -78,20 +81,21 @@ func TrainingInfo(data string, weight, height float64) (string, error) {
 	}
 	if err != nil {
 		log.Println(err)
-		return "", nil
+		return "", err
 	}
 
 	return fmt.Sprintf(`Тип тренировки: %s
 Длительность: %.2f ч.
 Дистанция: %.2f км.
 Скорость: %.2f км/ч
-Сожгли калорий: %.2f`, activity, duration.Hours(), dist, avgSpeed, calories), nil
+Сожгли калорий: %.2f
+`, activity, duration.Hours(), dist, avgSpeed, calories), nil
 
 }
 
 func RunningSpentCalories(steps int, weight, height float64, duration time.Duration) (float64, error) {
 	var err error
-	if steps < 0 {
+	if steps <= 0 {
 		err = fmt.Errorf("количество шагов не может быть меньше 0. ")
 	}
 	if weight <= 0 {
@@ -99,6 +103,9 @@ func RunningSpentCalories(steps int, weight, height float64, duration time.Durat
 	}
 	if height <= 0 {
 		err = errors.Join(err, fmt.Errorf("рост не может быть меньше или равен 0. "))
+	}
+	if duration.Minutes() <= 0 {
+		err = errors.Join(err, fmt.Errorf("время активности не может быть меньше или равно 0. "))
 	}
 	if err != nil {
 		return 0, err
@@ -111,7 +118,7 @@ func RunningSpentCalories(steps int, weight, height float64, duration time.Durat
 
 func WalkingSpentCalories(steps int, weight, height float64, duration time.Duration) (float64, error) {
 	var err error
-	if steps < 0 {
+	if steps <= 0 {
 		err = fmt.Errorf("количество шагов не может быть меньше 0. ")
 	}
 	if weight <= 0 {
@@ -119,6 +126,9 @@ func WalkingSpentCalories(steps int, weight, height float64, duration time.Durat
 	}
 	if height <= 0 {
 		err = errors.Join(err, fmt.Errorf("рост не может быть меньше 0. "))
+	}
+	if duration.Minutes() <= 0 {
+		err = errors.Join(err, fmt.Errorf("время активности не может быть меньше или равно 0. "))
 	}
 	if err != nil {
 		return 0, err
